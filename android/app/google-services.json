@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "318070767985",
+    "project_id": "blood-bank-system-12ad0",
+    "storage_bucket": "blood-bank-system-12ad0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:318070767985:android:e7e0241db62c8984ce76d0",
+        "android_client_info": {
+          "package_name": "com.donerdock"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "318070767985-vdpkffs1n78rim30auokk4mh6dvvb0k3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.donerdock",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "318070767985-svfrp494vlibl53ddea25a028hjkpq0q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_wwCHBAXMXSFsmrwpmrZtRrT6Nhd-Ik4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "318070767985-svfrp494vlibl53ddea25a028hjkpq0q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
