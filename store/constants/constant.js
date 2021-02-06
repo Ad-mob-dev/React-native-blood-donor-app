@@ -10,6 +10,7 @@ const ActionTypes = {
     authState : 'authState',
     updateUser : 'updateUser',
     getUsers : 'getUsers',
+    CLEAR_USERS : 'CLEAR_USERS',
 }
 
 export default  ActionTypes;

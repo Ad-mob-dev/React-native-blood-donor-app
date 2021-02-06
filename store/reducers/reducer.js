@@ -19,8 +19,9 @@ export default(state=INITIAL_STATE,action) =>{
                     return({
                     ...state,
                     guser:action.payload,
+                    users :state.users,
                     })
-
+          
             case ActionTypes.getUsers:
                 return({
 
@@ -32,25 +33,28 @@ export default(state=INITIAL_STATE,action) =>{
                         ...state,
                         guser: action.payload,
                     })        
-                    
-                    
-            case ActionTypes.QUERYDB:
-                return({
-                    ...state,
-                     search: [...action.payload.new],
-                }) 
-                
             case ActionTypes.SIGNOUT:
                 return(
 
                     {
-                        users : [],
-                        guser : {},
+                        guser : [],
                         search : [],
+                        users : [],
+                        
                     }
-                    
                 
                     )
+             case ActionTypes.QUERYDB:
+                return({
+                        ...state,
+                       search : action.payload ,
+                    }) 
+            case ActionTypes.CLEAR_USERS:
+                return({
+                                guser: {...state.guser},
+                                users: [],
+                      }) 
+                                          
         default:
             return state;
     }

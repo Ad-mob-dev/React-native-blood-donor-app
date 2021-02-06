@@ -1,4 +1,4 @@
-import React,{useEffect} from 'react';
+import React,{useEffect,useState} from 'react';
 import {Container, Content, Body} from 'native-base';
 import CustomHeader from '../components/header';
 import {connect} from 'react-redux';
@@ -8,12 +8,14 @@ import { CuSaver, StoreToDB } from '../store/actions/action';
 
  
 function Profile(props) {
+
     useEffect(() => {          
           
         props.update(props);
         
        
     },[])
+    
 
     return (
 
@@ -36,7 +38,7 @@ const mapStateToProp = (state)=>{
 
 const mapDispatchToProp = (dispatch)=>{
     return({
-        db : (userx,props)=>{ dispatch(StoreToDB(userx,props)) },
+        db : (userx,props,setload)=>{ dispatch(StoreToDB(userx,props,setload)) },
         update : (props)=>{dispatch(CuSaver(props)) }
     })
 }

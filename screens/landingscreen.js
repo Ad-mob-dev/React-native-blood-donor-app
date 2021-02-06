@@ -2,35 +2,60 @@ import React,{useEffect} from 'react';
 import { Card, CardItem, Container, Content, Icon, Separator, Text, Thumbnail ,Button, Item, Label} from 'native-base';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import gstyles from './styles/global';
-import { TextInput } from 'react-native';
+import { ActivityIndicator, Alert, TextInput } from 'react-native';
 import { useState } from 'react/cjs/react.development';
 import {connect} from 'react-redux';
-import { check, getUsers,LoginWithEmail, SignInGoogle} from '../store/actions/action';
+import {getUsers,LoginWithEmail, SignInGoogle,clear} from '../store/actions/action';
 import { GoogleSignin, GoogleSigninButton} from '@react-native-community/google-signin';
+import { set } from 'react-native-reanimated';
+import SplashScreen from 'react-native-splash-screen'
 
 function LandingScreen(props) {
-    const [email,setEmail] = useState(null);
-    const [pass,setPass] = useState(null);
-
+    const [email,setEmail] = useState('');
+    const [pass,setPass] = useState('');
+    const [isLoading,setLoading] = useState(false);
     useEffect(() => {
         GoogleSignin.configure({
             webClientId : '318070767985-svfrp494vlibl53ddea25a028hjkpq0q.apps.googleusercontent.com',
             offlineAccess:true,
-        })
+            forceCodeForRefreshToken : true,
 
-        props.getdbusers();
-      
-      
+        })
+        SplashScreen.hide();
+
+
+        if(props.state.users.length <= 0)
+        {
+            props.getdbusers();
+            console.log('fetching users')
+            setLoading(true);
+        }
+        setTimeout(()=>{setLoading(false)},3000)
+        return ()=>{
+            props.clearusers();
+        }
+
        },[])
 
+    
+const setload = (data)=>{
+    setLoading(data);
+}
     return (
         
         <Container>
- {console.log(props)}
-            <Content style={{backgroundColor:'lightgray'}}>
-                <Card style={gstyles.card}>
+            {console.log(props.state.users.length,'props',props)}
+            {isLoading ? ( 
+            
+                <ActivityIndicator
+
+             color='red'
+                size='large'
+                style={{marginTop:300}}/> ) :(
+                    <Content style={{backgroundColor:'lightgray'}}>
+                    <Card style={gstyles.card}>
                     <CardItem header style={{justifyContent:'center',alignItems:'center' ,flexDirection:'column'}}>
-                        <Thumbnail circular large style={{marginTop:40,marginBottom:15}} source={require('../assets/logo.jpg')}/>
+                        <Thumbnail circular large style={{marginTop:0,marginBottom:10,width:200,height:200}} source={require('../assets/connect.png')}/>
                         <Separator style={{width:'30%',height:2,backgroundColor:'transparent',margin:4}}/>
                         <Text selectable={true} suppressHighlighting={true} style={{fontSize:24,fontWeight:'bold'}}>Donor's Dock</Text>
                         <Separator style={{width:'30%',height:1,backgroundColor:'transparent'}}/>
@@ -80,7 +105,19 @@ function LandingScreen(props) {
                         full
                         androidRippleColor="red"
                         style={gstyles.socialloginbtn}
-                        onPress={()=>props.loginemail(email,pass,props)}
+                        onPress={()=>{
+                           if(email !== '' && pass !==""){
+                            
+                            props.loginemail(email,pass,props,setload)
+                           }else if(pass ===""){
+                               return Alert.alert('Empty Password Error','Password Field is Empty')
+                           }else if(email ===""){
+                            return Alert.alert('Empty Email Error','Email Field is Empty')
+                        }else{
+                            return Alert.alert('Empty Email/Pass Error','Email & Pass Fields are Empty')
+                        }
+                        }
+                        }
                         >
                             <Text style={gstyles.sociallogintxt}>Sign in</Text>
                         </Button>
@@ -93,7 +130,7 @@ function LandingScreen(props) {
                            size={GoogleSigninButton.Size.Wide} 
                            color={GoogleSigninButton.Color.Dark}
                            style={{width:"87%"}}  
-                           onPress={()=>{props.google(props)}}
+                           onPress={()=>{props.google(props,setload)}}
                            />                         
                        </Item>
 
@@ -102,8 +139,10 @@ function LandingScreen(props) {
                         <TouchableOpacity activeOpacity={0} onPress={()=>{props.navigation.navigate('Sign Up')}}><Text style={{fontSize:12,color:'royalblue'}}>Sign up</Text></TouchableOpacity>
                         </Item>
                     </CardItem>
-                </Card>
-            </Content>
+                </Card>     
+                </Content>
+                )
+            }
 
         </Container>
 
@@ -120,9 +159,10 @@ const mapStateToProp = (state)=>{
 
 const mapDispatchToProp = (dispatch)=>{
     return({
-        google : (props)=>{ dispatch(SignInGoogle(props))},
+        google : (props,setload)=>{ dispatch(SignInGoogle(props,setload))},
         getdbusers: ()=>{dispatch(getUsers())},
-        loginemail : (email,pass,props)=>{dispatch(LoginWithEmail(email,pass,props))}
+        loginemail : (email,pass,props,setload)=>{dispatch(LoginWithEmail(email,pass,props,setload))},
+        clearusers : ()=>{dispatch(clear())},
     })
 }
 export default connect(mapStateToProp,mapDispatchToProp)(LandingScreen);

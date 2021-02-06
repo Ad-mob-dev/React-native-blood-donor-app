@@ -1,18 +1,17 @@
-  import { Card, CardItem,Container, Content, Icon, Separator, Text, Thumbnail ,Button, Item, Label} from 'native-base';
-import React, { useEffect,useState,useRef} from 'react';
-import { connect } from 'react-redux';
+import {Card,CardItem,Container,Content,Icon, Separator,Text,Thumbnail,Button,Item} from 'native-base';
+import React, {useState,useRef} from 'react';
+import {connect} from 'react-redux';
 import gstyles from './styles/global';
-import {TextInput,ImageBackground} from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { StoreToDB } from '../store/actions/action';
-
-
+import {TextInput,ImageBackground,ActivityIndicator,View, Alert} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {StoreToDB} from '../store/actions/action';
+import {launchImageLibrary} from 'react-native-image-picker';
+import {firebase} from '@react-native-firebase/storage';
   
 export function Uregistry (props) {
-
+  
   const [userx, setuserx] = useState(props.state.guser)
   const {name,id,age,gender,location,bloodgrp,email,photo,emailV,creation,phone}= userx;
- 
   const [editableStatusna,setEditableStatusna]= useState(false);
   const [editableStatusem,setEditableStatusem]= useState(false);
   const [editableStatusag,setEditableStatusag]= useState(false);
@@ -29,22 +28,84 @@ export function Uregistry (props) {
   const locationRef = useRef();
 
 
+  const [isLoading,setLoading] = useState(false);
+  const [isImgLoading,setImgLoading] = useState(false);
+  
+  const setload = (data)=>{
+      setLoading(data);
+  }
+
+  const options = {
+    title: 'Select Avatar',
+    mediaType : 'photo',
+    maxWidth: 500,
+    maxHeight:500,
+    customButtons: [{ name: 'upload photo', title: 'Choose Photo from Gallery' }],
+    storageOptions: {
+      skipBackup: true,
+      path: 'images',
+    },
+  }
+
+function selectImage(){
+  setImgLoading(true)
+  launchImageLibrary(options,(response)=>{
+    var imgRef = firebase.storage().ref('Images/'+props.state.guser.id);
+    if(response.didCancel){
+      setImgLoading(false);
+      Alert.alert("Status",'You"ve Canceled the Image Upload Request ')
+    }else if(response.errorCode){
+      setImgLoading(false);
+      Alert.alert("Image Picker Error"+response.errorCode,response.errorMessage)
+    }else{
+     imgRef.putFile(response.uri).then( async (data)=>{
+       let url = await imgRef.getDownloadURL()
+       
+        setuserx({...userx,photo:url})
+        setImgLoading(false)
+     
+        Alert.alert('Media Ready','Your Profile Picture is Ready to Upload')
+     
+       }).catch( 
+         (e)=>{
+          setImgLoading(false)
+
+          Alert.alert("ERROR",`Code :${e.code +' Message:'+ e.message}`)
+         });
+      
+    }
+
+ 
+
+  })
+}
+
   return (
 
     <Container>
-      <Content style={{backgroundColor:'gray'}}>
-    <Card style={gstyles.card}>
-        <CardItem bordered  header style={{justifyContent:'center',alignItems:'center' ,flexDirection:'column'}}>
-      <ImageBackground source={{uri:photo}} style={{width:'100%',height:150,}} resizeMethod='auto' resizeMode='repeat'>
-          <Thumbnail circular large style={{height:100,width:100,marginTop:25,borderWidth:2.5,borderColor:'white',alignSelf:'center'}} source={{uri:photo}}/>
-          <Separator style={{width:'30%',height:2,backgroundColor:'transparent',margin:4,}}/>
-          </ImageBackground>
-       
-      
-        </CardItem>
+      {isLoading? ( <ActivityIndicator
+             color='red'
+                size='large'
+                style={{marginTop:300}}/> ) :
+    ( <Content style={{backgroundColor:'gray'}}>
+        <Card style={gstyles.card}>
+          <CardItem bordered  header style={{justifyContent:'center',alignItems:'center' ,flexDirection:'column'}}>
+              <ImageBackground source={{uri:photo}} style={{width:'100%',height:150}} resizeMethod='auto' resizeMode='cover'>  
+               
+              <TouchableOpacity  style={{alignSelf:'flex-end',backgroundColor:'white',borderRadius:10,padding:3}} onPress={()=>{selectImage()}}><Icon name='camera-retro' type="FontAwesome" style={{color:'black',fontSize:20,textAlign:'center'}} /></TouchableOpacity>
+              {isImgLoading? <ActivityIndicator
+             color='red'
+                size='large'
+                style={{height:100,width:100,backgroundColor:'lightgray',alignSelf:'center', borderWidth:2.5,borderColor:'white'}}
+                /> :
+              <Thumbnail large style={{height:100,width:100,resizeMode:'contain', borderWidth:2.5,borderColor:'white',alignSelf:'center'}} source={{uri:photo}}/>
+              }
+              <Separator style={{width:'30%',height:2,backgroundColor:'transparent',margin:4,}}/>
+              </ImageBackground>
+          </CardItem>
         <CardItem bordered  cardBody style={{flexDirection:'column',justifyContent:'space-around',alignItems:'center'}}>
         {/* name */}
-        <Item rounded>
+        <Item rounded style={{marginBottom:5,marginTop:5}}>
                 <Icon style={gstyles.inputicn} name='user' type='AntDesign'/>
                   <TextInput 
                   ref={nameRef}
@@ -61,7 +122,7 @@ export function Uregistry (props) {
                   selectionColor="lightgray"
                   returnKeyLabel='Next'
                   returnKeyType='next'
-                  style={{width:'80%'}}
+                  style={{width:'75%'}}
                   onEndEditing ={()=>{setEditableStatusna(false)}}
                   />
                   <TouchableOpacity onPress={()=>{
@@ -73,10 +134,10 @@ export function Uregistry (props) {
    
                   </TouchableOpacity>        
          </Item>
-         <Separator style={{height:5,backgroundColor:'transparent'}}/>
+         <Separator style={{height:10,backgroundColor:'transparent'}}/>
          {/* age */}
-         <Item rounded>
-                <Icon style={gstyles.inputicn} name='history' type='FontAwesome'/>
+         <Item rounded style={{marginBottom:5}}>
+                <Icon style={gstyles.inputicn} name='chevron-triple-up' type='MaterialCommunityIcons'/>
                   <TextInput 
                   ref={ageRef}
                   value={age}
@@ -89,7 +150,7 @@ export function Uregistry (props) {
                   selectionColor="lightgray"
                   returnKeyLabel='Next'
                   returnKeyType='next'
-                  style={{width:'80%'}}
+                  style={{width:'75%'}}
                   onEndEditing ={()=>{setEditableStatusag(false)}}
                   />
 
@@ -104,9 +165,10 @@ export function Uregistry (props) {
          </Item>
          <Separator style={{height:5,backgroundColor:'transparent'}}/>
          {/* gender */}
-         <Item rounded>
-                <Icon style={gstyles.inputicn} name='mail' type='AntDesign'/>
+         <Item rounded style={{marginBottom:5}}>
+                <Icon style={gstyles.inputicn} name='transgender-outline' type='Ionicons'/>
                   <TextInput 
+                  maxLength={11}
                   ref={genderRef}
                   value={gender}
                   editable ={editableStatusgd}
@@ -118,7 +180,7 @@ export function Uregistry (props) {
                   selectionColor="lightgray"
                   returnKeyLabel='Next'
                   returnKeyType='next'
-                  style={{width:'80%'}}
+                  style={{width:'75%'}}
                   onEndEditing ={()=>{setEditableStatusgd(false)}}
                   />
                   
@@ -135,7 +197,7 @@ export function Uregistry (props) {
                   </Item>
           <Separator style={{height:5,backgroundColor:'transparent'}}/>
           {/* Location */}
-          <Item rounded>
+          <Item rounded style={{marginBottom:5}}>
                 <Icon style={gstyles.inputicn} name='location-pin' type='SimpleLineIcons'/>
                   <TextInput 
                   ref={locationRef}
@@ -151,7 +213,7 @@ export function Uregistry (props) {
                   selectionColor="lightgray"
                   returnKeyLabel='Next'
                   returnKeyType='next'
-                  style={{width:'80%'}}
+                  style={{width:'75%'}}
                   onEndEditing ={()=>{setEditableStatusloc(false)}}
                   />
                   
@@ -168,7 +230,7 @@ export function Uregistry (props) {
                   </Item>
           <Separator style={{height:5,backgroundColor:'transparent'}}/>
         {/* mail */}
-        <Item rounded>
+        <Item rounded style={{marginBottom:5}}>
                 <Icon style={gstyles.inputicn} name='mail' type='AntDesign'/>
                   <TextInput 
                   ref={emailRef}
@@ -183,7 +245,7 @@ export function Uregistry (props) {
                   selectionColor="lightgray"
                   returnKeyLabel='Next'
                   returnKeyType='next'
-                  style={{width:'80%'}}
+                  style={{width:'75%'}}
                   onEndEditing ={()=>{setEditableStatusem(false)}}
                   />
                   
@@ -200,12 +262,12 @@ export function Uregistry (props) {
                   </Item>
         <Separator style={{height:5,backgroundColor:'transparent'}}/>
         {/* phone */}
-        <Item rounded>
+        <Item rounded style={{marginBottom:5}}>
          <Icon style={gstyles.inputicn} name='phone' type='AntDesign'/>
          <TextInput 
+         maxLength={13}
           ref={phoneRef}
           value={phone}
-                  
           onChangeText={(e)=>{setuserx({...userx,phone:e})}}
           keyboardType='phone-pad' 
           editable ={editableStatusph}
@@ -217,7 +279,7 @@ export function Uregistry (props) {
           selectionColor="lightgray"
           returnKeyLabel='Next'
           returnKeyType='next'
-          style={{width:'80%'}}
+          style={{width:'75%'}}
           onEndEditing ={()=>{setEditableStatusph(false)}}
           />
                   
@@ -232,9 +294,10 @@ export function Uregistry (props) {
           </Item>
           <Separator style={{height:5,backgroundColor:'transparent'}}/>
                 {/* bloodgrp */}
-                <Item rounded>
-                <Icon style={gstyles.inputicn} name='heart-o' type='FontAwesome'/>
+                <Item rounded style={{marginBottom:5}}>
+                <Icon style={gstyles.inputicn} name='blood' type='Fontisto'/>
                   <TextInput 
+                  maxLength={3}
                   ref={bloodRef}
                   value={bloodgrp}
                   onChangeText={(e)=>{setuserx({...userx,bloodgrp:e})}}
@@ -248,7 +311,7 @@ export function Uregistry (props) {
                   selectionColor="lightgray"
                   returnKeyLabel='Next'
                   returnKeyType='next'
-                  style={{width:'80%'}}      
+                  style={{width:'75%'}}      
                   onEndEditing ={()=>{setEditableStatusbl(false)}}
                   />
                   
@@ -271,18 +334,20 @@ export function Uregistry (props) {
             <Button dark 
             rounded
             full                       
-            disabled={((photo === null || photo === '') ||(bloodgrp === null || bloodgrp === '' || bloodgrp.length > 3) || (age === null || age === '') || (name === null || name === '') || (email === null || email === '') || (phone === null || phone === '' || phone.length > 13 ) )? true : false}
-            androidRippleColor="red"
+          disabled={((photo === null || photo === '') || (age === null|| age === '') || (name === null || name === '') || (location === '' || location === null || (email === null || email === '') || (phone === null || phone === ''||phone.length > 13 ) || (bloodgrp !== 'A+' && bloodgrp !== 'A-' && bloodgrp !== 'B-' && bloodgrp !== 'B+' && bloodgrp !== 'AB-' && bloodgrp !== 'AB+' && bloodgrp !== 'O-'&& bloodgrp !== 'O+')||(gender !== 'M' && gender !== 'm' && gender !== 'Male'  &&  gender !== 'F' && gender !== 'f' && gender !== 'Female' ))? true :false)}
+          androidRippleColor="red"
             style={gstyles.socialloginbtn}
             onPress={()=>{
-             props.db(userx,props) }}
+             props.db(userx,props,setload) }}
             >
                 <Text style={gstyles.sociallogintxt}>Update Profile</Text>
             </Button>
          </CardItem>
         </CardItem>
     </Card>
-</Content>
+    </Content>
+    )
+  }
 
 
 
@@ -300,7 +365,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return({
-    db : (userx,props)=>{ dispatch(StoreToDB(userx,props)) },
+    db : (userx,props,setload)=>{ dispatch(StoreToDB(userx,props,setload)) },
 })
 }
 

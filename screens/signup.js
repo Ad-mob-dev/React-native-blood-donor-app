@@ -2,13 +2,13 @@ import React,{useState} from 'react';
 import { Card, CardItem, Container, Content, Icon, Separator, Text, Thumbnail ,Button, Item, Label} from 'native-base';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import gstyles from './styles/global';
-import { TextInput } from 'react-native';
+import { TextInput,Alert } from 'react-native';
 import {connect} from 'react-redux';
 import {SignUpWithEmail} from '../store/actions/action';
 
 function SignUp(props) {
-    const [emailR,setEmailR] = useState(null);
-    const [passR,setPassR] = useState(null);
+    const [emailR,setEmailR] = useState("");
+    const [passR,setPassR] = useState("");
     return (
 
         <Container>
@@ -16,7 +16,7 @@ function SignUp(props) {
             <Content style={{backgroundColor:'lightgray'}}>
                 <Card style={gstyles.card}>
                     <CardItem header style={{justifyContent:'center',alignItems:'center' ,flexDirection:'column'}}>
-                        <Thumbnail circular large style={{marginTop:40,marginBottom:15}} source={require('../assets/logo.jpg')}/>
+                    <Thumbnail circular large style={{marginTop:0,marginBottom:10,width:200,height:200}} source={require('../assets/connect.png')}/>
                         <Separator style={{width:'30%',height:2,backgroundColor:'transparent',margin:4}}/>
                         <Text selectable={true} suppressHighlighting={true} style={{fontSize:24,fontWeight:'bold'}}>Donor's Dock</Text>
                         <Separator style={{width:'30%',height:1,backgroundColor:'transparent'}}/>
@@ -71,7 +71,18 @@ function SignUp(props) {
                         androidRippleColor="red"
                         onMagicTap={()=>{}}
                         style={gstyles.socialloginbtn}
-                        onPress={()=>props.signupemail(emailR,passR,props)}
+                        onPress={()=>{
+                            if(emailR !== "" && passR !== ""){
+                                props.signupemail(emailR,passR,props)
+                            }else if(passR ===""){
+                                return Alert.alert('Empty Password Error','Password Field is Empty')
+                            }else if(emailR ===""){
+                             return Alert.alert('Empty Email Error','Email Field is Empty')
+                         }else{
+                             return Alert.alert('Empty Email/Pass Error','Email & Pass Fields are Empty')
+                         }
+                         }
+                         }
                         >
                             <Text style={gstyles.sociallogintxt}>Sign up</Text>
                         </Button>

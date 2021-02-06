@@ -1,107 +1,90 @@
 import { Alert, LogBox } from 'react-native';
 import {GoogleSignin} from '@react-native-community/google-signin';
 import database from '@react-native-firebase/database';
-import auth from '@react-native-firebase/auth';
+import auth, { firebase } from '@react-native-firebase/auth';
 LogBox.ignoreLogs(['Setting a timer for a long period of time'])
 import ActionTypes from '../constants/constant';
 
-export function ChangeName (){
-    const names = {
-        name : 'khan',
-    }
-    return (dispatch ) => { dispatch({type:ActionTypes.welcome, payload:names})}
-}
 
 export  function SignUpWithEmail (email,password,props){
+    const {users} = props.state;   
+    
     return async (dispatch)=>{
-       await auth().createUserWithEmailAndPassword(email,password).then((user)=>{
-              auth().onAuthStateChanged((user)=>{
-            if (user){
-                const {users} = props.state;   
 
-                const guser = {
-                    name : user.displayName,
-                    id : user.uid,
-                    age: null,
-                    bloodgrp :null,
-                    email : user.email,
-                    photo : 'https://api.multiavatar.com/'+user.displayNname+'.png',
-                    emailV : user.emailVerified,
-                    creation : user.metadata.creationTime,
-                    phone : user.phoneNumber,
-                    gender : null,
-                    location: null,
-                }
-                const filtereduser = users.filter((v)=> v.id === guser.id);
-                 if(filtereduser.length <= 0){
-                   
+    await firebase.auth().createUserWithEmailAndPassword(email,password).then((user)=>{
+            user = user.user;       
+            const guser = {
+                        name : user.displayName,
+                        id : user.uid,
+                        age: null,
+                        bloodgrp :null,
+                        email : user.email,
+                        photo : 'https://www.washingtonfirechiefs.com/Portals/20/EasyDNNnews/3593/img-blank-profile-picture-973460_1280.png',
+                        emailV : user.emailVerified,
+                        creation : Date.now(),
+                        phone : user.phoneNumber,
+                        gender : null,
+                        location: null,
+                    }
+                     const filtereduser = users.filter((v)=> v.id === guser.id);
                     dispatch({type:ActionTypes.authState,payload:guser})
-                    // props.navigation.navigate('UserRegistry')
 
-                }else{
-
-                    props.navigation.navigate('Home')
-                 }
-             
-            }else{
-                props.navigation.navigate('Sign In');
-            }
-              
+                    if(filtereduser.length <= 0){
+                    console.log('filtered',filtereduser)
+                        props.navigation.navigate('UserRegistry')
     
-                 })
- 
+                    }else{
     
-    
+                        props.navigation.navigate('Home')
+                     }
+                 
+                
     }).catch( 
             (e)=>{
-             Alert.alert("ERROR",`Code :${e.code +' Message:'+ e.message}`)
-            });
+                props.navigation.navigate('Sign In');
+                 Alert.alert("ERROR",`Code :${e.code +' Message:'+ e.message}`)
+                });
+     
     }
 }
 
-export function LoginWithEmail (email,password,props){
+export function LoginWithEmail (email,password,props,setload){
+    const {users} = props.state;  
+    setload(true) 
     return (dispatch)=>{
-        auth().signInWithEmailAndPassword(email,password).then((user)=>{
-
-                auth().onAuthStateChanged((user)=>{
-                    const {users} = props.state;   
-
-                    if (user){
-                        const guser = {
+        firebase.auth().signInWithEmailAndPassword(email,password).then((user)=>{
+                user = user.user;       
+                const guser = {
                             name : user.displayName,
                             id : user.uid,
                             age: null,
                             bloodgrp :null,
                             email : user.email,
-                            photo : user.photoURL !== null ? user.photoURL:'https://api.multiavatar.com/'+user.name+'.png',
+                            photo : user.photo,
                             emailV : user.emailVerified,
-                            creation : user.metadata.creationTime,
+                            creation : Date.now(),
                             phone : user.phoneNumber,
                             gender : null,
                             location: null,
                         }
+                       
                         const filtereduser = users.filter((v)=> v.id === guser.id);
+                      dispatch({type:ActionTypes.authState,payload:guser})
+
                         if(filtereduser.length <= 0){
-                   
-                            dispatch({type:ActionTypes.authState,payload:guser})
+                            setload(false)
                             props.navigation.navigate('UserRegistry')
         
                         }else{
-        
+                            setload(false)
                             props.navigation.navigate('Home')
                          }
                      
-                    }else{
-                        props.navigation.navigate('Sign In');
-                    }
-                      
-            
-                 })
-         
-
-            
+                    
         }).catch( 
                 (e)=>{
+                    setload(false)
+                    props.navigation.navigate('Sign In');
                      Alert.alert("ERROR",`Code :${e.code +' Message:'+ e.message}`)
                     });
     }
@@ -110,84 +93,89 @@ export function LoginWithEmail (email,password,props){
 
 //1 all from db and stores to store
 export function getUsers(){
-    return async (dispatch)=>{
-        database().ref('users/').on('value', (v) => {
+    return (dispatch)=>{
+
+        firebase.database().ref('users/').orderByChild('name').once('value',async (v) => {
             v.forEach((value) => {
-                dispatch({ type: ActionTypes.getUsers, payload: { new: value.val() } });
+              dispatch({ type: ActionTypes.getUsers, payload: { new: value.val() } });
             });
         })
 }
 }
 
-
 //2 
-export  function SignInGoogle(props){  
+export function SignInGoogle(props,setload){  
+    const {users} = props.state;   
+    setload(true)
     return async (dispatch)=>{
+        
+        GoogleSignin.hasPlayServices();
         await GoogleSignin.signIn().then((data)=>{        
             const credential = auth.GoogleAuthProvider.credential(data.idToken);
-          auth().signInWithCredential(credential);                    
-          auth().onAuthStateChanged((user)=>{
-        
-            if (user){
-                    const guser = {
+        firebase.auth().signInWithCredential(credential).then((user)=>{
+            user = user.user;       
+            const guser = {
                         name : user.displayName,
                         id : user.uid,
                         age: null,
                         bloodgrp :null,
                         email : user.email,
-                        photo : user.photoURL !== null ? user.photoURL:'https://api.multiavatar.com/'+user.name+'.png',
+                        photo : user.PhotoURL,
                         emailV : user.emailVerified,
-                        creation : user.metadata.creationTime,
+                        creation : Date.now(),
                         phone : user.phoneNumber,
                         gender : null,
                         location: null,
                     }
-                    const {users} = props.state;
-        
+                
                     const filtereduser = users.filter((v)=> v.id === guser.id);
-                     if(filtereduser.length <= 0){
+                    dispatch({type:ActionTypes.authState,payload:guser})
+
+                    if(filtereduser.length <= 0){
+                        setload(false)
+                        props.navigation.navigate('UserRegistry')
     
-                        dispatch({type:ActionTypes.authState,payload:guser})
-                        alert(user.displayName)
-                        props.navigation.navigate('UserRegistry');
-
                     }else{
-
+                        setload(false);
                         props.navigation.navigate('Home')
                      }
                  
-                }else{
-                    props.navigation.navigate('Sign In');
-                }
-                  
-        
-            })
 
-
+              
+          }).catch( 
+            (e)=>{
+                setload(false)
+             Alert.alert("ERROR",`Code :${e.code +' Messagex:'+ e.message}`)
+            });             
           }).catch( 
                     (e)=>{
-                     Alert.alert("ERROR",`Code :${e.code +' Message:'+ e.message}`)
-                    }); 
+                        setload(false)
+                              Alert.alert("ERROR",`Code :${e.code +' Message:'+ e.message}`)
+                    });
+        
+        
+        
+        
+        
+          
     }
 }
-    
-
-
-
-
-   
-   
-
-   
-export function StoreToDB(user,props){
+     
+export function StoreToDB(user,props,setload){
+    setload(true)
     return (dispatch)=>{
   database().ref('users/').child(user.id).set(user).then(
      ()=>{ 
         dispatch({type: ActionTypes.StoreToDB,payload:user})
         Alert.alert('Congratulations','profile Updated Successfully')
         props.navigation.navigate('Home');
+        setload(false)
+
     }
-).catch((e)=>{ Alert.alert(e.code,e.message)})
+).catch((e)=>{ 
+    
+    setload(false)
+    Alert.alert(e.code,e.message)})
 
     }
     
@@ -195,22 +183,24 @@ export function StoreToDB(user,props){
 
 
 export function SignOut(props){
-    return async (dispatch)=>{
-        if (auth().currentUser.providerData[0].providerId !== 'google.com'){
-         await auth().signOut().then(()=>{
-            Alert.alert('Logged Out','User Successfully Logged Out email');
-            dispatch({type:ActionTypes.SIGNOUT,payload :{}})
-            props.nav.navigation.navigate('Sign In');
+    return (dispatch)=>{
+        if (auth().currentUser.emailVerified === false){
+          auth().signOut().then(()=>{
+            Alert.alert('Logged Out','User Successfully Logged Out');            
+             dispatch({type:ActionTypes.SIGNOUT,payload :{}})
+            props.nav.navigation.replace('Sign In');
 
         }).catch( 
             (e)=>{
              Alert.alert("ERROR",`Code :${e.code +' Message:'+ e.message}`)
             });    
         }else{
-        await GoogleSignin.revokeAccess();
-        await GoogleSignin.signOut().then(()=>{
+         GoogleSignin.revokeAccess();
+         GoogleSignin.signOut().then(()=>{
             Alert.alert('Logged Out','User Successfully Logged Out');
-            props.nav.navigation.navigate('Sign In');
+            dispatch({type:ActionTypes.SIGNOUT,payload :{}})
+            props.nav.navigation.replace('Sign In');
+
         }).catch( 
             (e)=>{
              Alert.alert("ERROR",`Code :${e.code +' Message:'+ e.message}`)
@@ -221,14 +211,14 @@ export function SignOut(props){
 }
 
 export function CuSaver(props){
+    const {users} = props.state;
     return (dispatch)=>{
-    const {users} = props.state;   
      users.map((v)=>{
         
         if(v.id === props.state.guser.id)
-        {
-            console.log(v)
-          return dispatch({type:ActionTypes.updateUser,payload : {v}})
+        {     
+            dispatch({type:ActionTypes.updateUser,payload : v})
+
         }
 
     })
@@ -242,10 +232,29 @@ export function CuSaver(props){
 export function QueryDb(val) {
     return (dispatch) => {
     database().ref('users/').on('value', (snap) => {
+        const search = []
           console.log(snap.numChildren())
-          Object.values(snap.val()).map((v)=>{
-          return dispatch({type:ActionTypes.QUERYDB,payload:{new:v}})
+          Object.values(snap.val()).filter((v)=>{
+              if(v.bloodgrp === val){
+                  search.push(v);
+             const filtered = dispatch({type:ActionTypes.QUERYDB,payload:search})
+              }else if(val === '' || val === null){
+                  search.forEach ((v)=>{
+                      search.pop(v)
+            
+                    })
+                    const filtered = dispatch({type:ActionTypes.QUERYDB,payload:search })
+            
+                }
           })
         })
+    }
+}
+
+export function clear(){
+    return (dispatch) =>{
+        dispatch({type:ActionTypes.CLEAR_USERS,payload:{}})
+
+
     }
 }

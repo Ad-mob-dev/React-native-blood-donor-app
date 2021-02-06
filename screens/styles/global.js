@@ -45,9 +45,9 @@ const gstyles = new StyleSheet.create({
      card :{
          alignSelf:'center',
          width:Dimensions.get('screen').width,
-         height:Dimensions.get('window').height,
+         height:Dimensions.get("screen").height-35,
          backgroundColor:'white',
-         elevation:3,
+         elevation:2,
      },
      cardBody:{
          flexDirection:'column',
